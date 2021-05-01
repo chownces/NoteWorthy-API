@@ -1,5 +1,5 @@
 import express from 'express';
-import {graphqlHTTP} from 'express-graphql';
+import { graphqlHTTP } from 'express-graphql';
 import mongoose from 'mongoose';
 import schema from './schema';
 
