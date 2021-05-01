@@ -1,3 +1,4 @@
+import cors from 'cors';
 import express from 'express';
 import { graphqlHTTP } from 'express-graphql';
 import mongoose from 'mongoose';
@@ -12,6 +13,15 @@ mongoose.connect('mongodb://localhost:27017/noteworthy_db', {
 // TODO: Check if nodemon has to be a main dependency
 const app = express();
 const PORT = 4300;
+
+// TODO: Setup CORS policy to match deployed frontend
+// const corsOptions = {
+//   origin: 'http://localhost:3000',
+//   optionsSuccessStatus: 200
+// }
+
+// app.use(cors(corsOptions));
+app.use(cors());
 
 app.get('/', (req, res) => {
   res.json({
