@@ -16,7 +16,7 @@ const typeDefs = `
   }
 
   type Note {
-    _id: ID!
+    id: ID!
     title: String!
     date: Date
     blocks: [NoteBlock]!
@@ -41,14 +41,15 @@ const typeDefs = `
   scalar Date
 
   type Query {
-    getNote(_id: ID!): Note
+    getNote(id: ID!): Note
     allNotes: [Note]
   }
 
   type Mutation {
     createNote(input: NoteInput): Note
-    updateNote(_id: ID!, input: NoteUpdateInput): Note
-    deleteNote(_id: ID!): Note
+    updateNote(id: ID!, input: NoteUpdateInput): Note
+    deleteNote(id: ID!): Note
+    deleteAll: Note
   }
 `;
 /**

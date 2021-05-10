@@ -14,6 +14,8 @@ mongoose.connect('mongodb://localhost:27017/noteworthy_db', {
 const app = express();
 const PORT = 4300;
 
+// TODO: Handle authentication
+
 // TODO: Setup CORS policy to match deployed frontend
 // const corsOptions = {
 //   origin: 'http://localhost:3000',
