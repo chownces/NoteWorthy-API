@@ -1,8 +1,35 @@
 import mongoose from 'mongoose';
-const Schema = mongoose.Schema;
+const { Schema } = mongoose;
+
+const NoteSchema = new Schema({
+  title: {
+    type: String,
+    required: true
+  },
+  blocks: {
+    type: [NoteBlockSchema],
+    required: true
+  },
+  // blocks: {
+  //   type: Schema.Types.String,
+  //   ref: 'Noteblock'
+  // },
+  creationDate: {
+    type: Date,
+    default: new Date(Date.now())
+  },
+  latestUpdate: {
+    type: Date,
+    required: true
+  }
+});
 
 const NoteBlockSchema = new Schema({
   id: {
+    /**
+     * We are using the unique id string that is generated from the frontend
+     * as we do not save the changes to the backend on every keydown.
+     */
     type: String,
     required: true
   },
@@ -14,22 +41,8 @@ const NoteBlockSchema = new Schema({
     type: String,
     required: true
   }
-})
+});
 
-const NoteSchema = new Schema({
-  title: {
-    type: String,
-    required: true
-  },
-  blocks: {
-    type: [NoteBlockSchema],
-    required: true
-  },
-  date: {
-    type: Date,
-    default: Date.now
-  }
-  // TODO: Track latest update to note
-})
+const Note = mongoose.model('Note', NoteSchema);
 
-export default mongoose.model('note', NoteSchema);
+export default Note;

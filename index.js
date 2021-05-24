@@ -1,44 +1,67 @@
-import cors from 'cors';
+import { ApolloServer } from 'apollo-server-express';
+import dotenv from 'dotenv';
 import express from 'express';
-import { graphqlHTTP } from 'express-graphql';
+import { buildContext } from 'graphql-passport';
 import mongoose from 'mongoose';
-import schema from './schema';
+import session from 'express-session';
+import { v4 as uuidv4 } from 'uuid';
+
+import typeDefs from './typeDefs';
+import resolvers from './resolvers';
+import passport from './passport/passport';
+
+dotenv.config();
+const { MONGODB_URI, SESSION_SECRET } = process.env;
 
 mongoose.Promise = global.Promise;
-mongoose.connect('mongodb://localhost:27017/noteworthy_db', {
+mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 });
+// NOTE: To drop the entire database
+// .then(conn => mongoose.connection.db.dropDatabase());
 
-// TODO: Check if nodemon has to be a main dependency
-const app = express();
 const PORT = 4300;
 
-// TODO: Handle authentication
-
 // TODO: Setup CORS policy to match deployed frontend
-// const corsOptions = {
-//   origin: 'http://localhost:3000',
-//   optionsSuccessStatus: 200
-// }
+const corsOptions = {
+  origin: 'http://localhost:3000',
+  optionsSuccessStatus: 200,
+  credentials: true
+};
 
-// app.use(cors(corsOptions));
-app.use(cors());
+const app = express();
 
-app.get('/', (req, res) => {
-  res.json({
-    message: 'Notetaking API v1'
-  });
+// TODO: Recheck the arguments here
+const sessionConfig = {
+  genid: req => uuidv4(),
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false
+};
+
+if (app.get('env') === 'production') {
+  // app.set('trust proxy', 1) // trust first proxy
+  sessionConfig.cookie.secure = true; // serve secure cookies
+}
+
+app.use(session(sessionConfig));
+
+// Passport middleware
+app.use(passport.initialize());
+app.use(passport.session());
+
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: ({ req, res }) => buildContext({ req, res }),
+  playground: {
+    settings: {
+      'request.credentials': 'same-origin'
+    }
+  }
 });
 
-app.use(
-  '/graphql',
-  graphqlHTTP({
-    schema: schema,
-    graphiql: true
-  })
-);
+server.applyMiddleware({ app, cors: corsOptions });
 
-app.listen(PORT, () => {
-  console.log(`Server is listening on PORT ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server ready at port ${PORT}`));
