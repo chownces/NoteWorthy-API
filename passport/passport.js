@@ -5,7 +5,8 @@ import passport from 'passport';
 import User from '../models/user';
 
 passport.use(
-  new GraphQLLocalStrategy({ usernameField: 'email' }, (email, password, done) => {
+  // TODO: Handle authentication failure
+  new GraphQLLocalStrategy((email, password, done) => {
     User.findOne({ email: email })
       .then(user => {
         if (!user) {
@@ -28,7 +29,7 @@ passport.use(
 );
 
 passport.serializeUser((user, done) => {
-  done(null, user.id);
+  done(null, user._id);
 });
 passport.deserializeUser((id, done) => {
   User.findById(id, (err, user) => {

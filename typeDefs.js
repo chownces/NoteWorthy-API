@@ -8,30 +8,28 @@
 
 import { gql } from 'apollo-server-express';
 
-// TODO: Only the authflow queries and mutations are working
-
 const typeDefs = gql`
   type User {
     firstname: String!
     lastname: String!
     email: String!
-    password: String!
-    databases: [Database]
   }
 
   type Database {
     id: ID!
     title: String!
     currentView: String!
-    notes: [Note]
+    notes: [String]!
   }
 
   type Note {
     id: ID!
+    userId: ID!
+    databaseId: ID!
     title: String!
     blocks: [NoteBlock]!
-    creationDate: Date
-    latestUpdate: Date
+    creationDate: Date!
+    latestUpdate: Date!
   }
 
   type NoteBlock {
@@ -41,7 +39,7 @@ const typeDefs = gql`
   }
 
   type AuthPayload {
-    user: User
+    user: User!
   }
 
   input RegisterInput {
@@ -57,15 +55,6 @@ const typeDefs = gql`
     tag: String!
   }
 
-  input CreateNoteInput {
-    title: String!
-    blocks: [NoteBlockInput]!
-  }
-
-  input UpdateNoteTitleInput {
-    title: String
-  }
-
   input UpdateNoteBlocksInput {
     blocks: [NoteBlockInput]
   }
@@ -73,28 +62,24 @@ const typeDefs = gql`
   scalar Date
 
   type Query {
-    getNote(id: ID!): Note
-    allNotes: [Note]
-    allDatabases: [Database]
-    allUsers: [User]
+    getNote(noteId: ID!): Note
+    getAllNotesInDatabase(databaseId: ID!): [Note]
+    getAllUserDatabases: [Database]
     currentUser: User
   }
 
   type Mutation {
-    createNote(input: CreateNoteInput): Note
-    updateNoteTitle(id: ID!, input: UpdateNoteTitleInput): Note
-    updateNoteBlocks(id: ID!, input: UpdateNoteBlocksInput): Note
-    deleteNote(id: ID!): Note
-    deleteAllUsers: Boolean
-
     register(input: RegisterInput): AuthPayload
     login(email: String!, password: String!): AuthPayload
     logout: Boolean
+    createDatabase: Database
+    updateDatabaseTitle(databaseId: ID!, title: String!): Database
+    createNote(databaseId: ID!): Note
+    updateNoteTitle(noteId: ID!, title: String!): Note
+    updateNoteBlocks(noteId: ID!, input: UpdateNoteBlocksInput): Note
   }
 `;
 
-/**
- * TODO: Create mutations that update fields individually.
- */
+// TODO: See resolvers.js for a list of unimplemented queries and mutations
 
 export default typeDefs;

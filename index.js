@@ -57,7 +57,8 @@ const server = new ApolloServer({
   context: ({ req, res }) => buildContext({ req, res }),
   playground: {
     settings: {
-      'request.credentials': 'same-origin'
+      'request.credentials': 'same-origin',
+      'editor.theme': 'light'
     }
   }
 });

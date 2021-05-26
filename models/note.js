@@ -1,29 +1,6 @@
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
-const NoteSchema = new Schema({
-  title: {
-    type: String,
-    required: true
-  },
-  blocks: {
-    type: [NoteBlockSchema],
-    required: true
-  },
-  // blocks: {
-  //   type: Schema.Types.String,
-  //   ref: 'Noteblock'
-  // },
-  creationDate: {
-    type: Date,
-    default: new Date(Date.now())
-  },
-  latestUpdate: {
-    type: Date,
-    required: true
-  }
-});
-
 const NoteBlockSchema = new Schema({
   id: {
     /**
@@ -40,6 +17,39 @@ const NoteBlockSchema = new Schema({
   tag: {
     type: String,
     required: true
+  }
+});
+
+const NoteSchema = new Schema({
+  userId: {
+    type: Schema.Types.ObjectId,
+    required: true
+  },
+  databaseId: {
+    type: Schema.Types.ObjectId,
+    required: true
+  },
+  title: {
+    type: String,
+    required: true
+  },
+  blocks: {
+    type: [NoteBlockSchema],
+    required: true
+  },
+  // blocks: {
+  //   type: Schema.Types.String,
+  //   ref: 'Noteblock'
+  // },
+  creationDate: {
+    type: Date,
+    required: true,
+    default: Date.now()
+  },
+  latestUpdate: {
+    type: Date,
+    required: true,
+    default: Date.now()
   }
 });
 
