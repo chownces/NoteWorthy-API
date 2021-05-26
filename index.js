@@ -11,21 +11,29 @@ import resolvers from './resolvers';
 import passport from './passport/passport';
 
 dotenv.config();
-const { MONGODB_URI, SESSION_SECRET } = process.env;
+const {
+  CORS_ORIGIN,
+  MONGODB_URI,
+  MONGODB_USERNAME,
+  MONGODB_PASSWORD,
+  SESSION_SECRET
+} = process.env;
 
 mongoose.Promise = global.Promise;
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
+  user: MONGODB_USERNAME,
+  pass: MONGODB_PASSWORD
 });
 // NOTE: To drop the entire database
 // .then(conn => mongoose.connection.db.dropDatabase());
 
-const PORT = 4300;
+const PORT = process.env.PORT || 4300;
 
 // TODO: Setup CORS policy to match deployed frontend
 const corsOptions = {
-  origin: 'http://localhost:3000',
+  origin: CORS_ORIGIN,
   optionsSuccessStatus: 200,
   credentials: true
 };
