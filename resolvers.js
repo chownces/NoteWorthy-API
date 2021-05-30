@@ -88,9 +88,27 @@ const resolvers = {
       // TODO: Check whether to return a boolean instead
       return newDatabase;
     },
+    deleteDatabase: async (parent, { databaseId }, context) => {
+      assertAuthenticated(context);
+      await verifyDatabaseBelongsToUser(context, databaseId);
+
+      await Database.findOneAndRemove(
+        { _id: databaseId },
+        {
+          useFindAndModify: false
+        }
+      );
+
+      const email = context.getUser().email;
+      const userDocument = await User.findOne({ email: email });
+      arrayRemoveItem(userDocument.databases, databaseId);
+
+      await userDocument.save();
+      return true;
+    },
     updateDatabaseTitle: async (parent, { databaseId, title }, context) => {
       assertAuthenticated(context);
-      verifyDatabaseBelongsToUser(context, databaseId);
+      await verifyDatabaseBelongsToUser(context, databaseId);
 
       return await Database.findOneAndUpdate(
         { _id: databaseId },
@@ -103,11 +121,10 @@ const resolvers = {
     },
     // TODO: updateDatabaseView
     // TODO: updateDatabaseNotes (array of IDs)
-    // TODO: deleteDatabase (also delete from user database array)
 
     // ================== Note related ==================
     // TODO: Handle the ordering of the notes
-    createNote: async (root, { databaseId }, context) => {
+    createNote: async (parent, { databaseId }, context) => {
       assertAuthenticated(context);
       await verifyDatabaseBelongsToUser(context, databaseId);
 
@@ -127,7 +144,27 @@ const resolvers = {
       // TODO: Check whether to return a boolean instead
       return newNote;
     },
-    updateNoteTitle: async (root, { noteId, title }, context) => {
+    deleteNote: async (parent, { noteId }, context) => {
+      assertAuthenticated(context);
+      await verifyNoteBelongsToUser(context, noteId);
+
+      const noteDocument = await Note.findOne({ _id: noteId });
+      const databaseId = noteDocument.databaseId;
+
+      await Note.findOneAndRemove(
+        { _id: noteId },
+        {
+          useFindAndModify: false
+        }
+      );
+
+      const databaseDocument = await Database.findOne({ _id: databaseId });
+      arrayRemoveItem(databaseDocument.notes, noteId);
+      await databaseDocument.save();
+
+      return true;
+    },
+    updateNoteTitle: async (parent, { noteId, title }, context) => {
       assertAuthenticated(context);
       await verifyNoteBelongsToUser(context, noteId);
 
@@ -141,7 +178,7 @@ const resolvers = {
         }
       );
     },
-    updateNoteBlocks: async (root, { noteId, input }, context) => {
+    updateNoteBlocks: async (parent, { noteId, input }, context) => {
       assertAuthenticated(context);
       await verifyNoteBelongsToUser(context, noteId);
 
@@ -155,7 +192,6 @@ const resolvers = {
         }
       );
     }
-    // TODO: deleteNote (also delete from database array)
     // TODO: updateNoteDatabaseId (when shifting notes between databases)
   }
 };
@@ -197,6 +233,17 @@ const verifyNoteBelongsToUser = async (context, noteId) => {
 
   if (noteDocument.userId.toString() !== context.getUser()._id.toString()) {
     throw new ForbiddenError('This note does not belong to you!');
+  }
+};
+
+/**
+ * In-place removal of the specified item from the given array
+ * if it exists.
+ */
+const arrayRemoveItem = (arr, value) => {
+  const index = arr.indexOf(value);
+  if (index > -1) {
+    arr.splice(index, 1);
   }
 };
 
