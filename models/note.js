@@ -44,12 +44,12 @@ const NoteSchema = new Schema({
   creationDate: {
     type: Date,
     required: true,
-    default: Date.now()
+    default: Date.now
   },
   latestUpdate: {
     type: Date,
     required: true,
-    default: Date.now()
+    default: Date.now
   }
 });
 
