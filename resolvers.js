@@ -92,7 +92,7 @@ const resolvers = {
       assertAuthenticated(context);
       await verifyDatabaseBelongsToUser(context, databaseId);
 
-      await Database.findOneAndRemove(
+      const deletedDatabase = await Database.findOneAndRemove(
         { _id: databaseId },
         {
           useFindAndModify: false
@@ -104,7 +104,7 @@ const resolvers = {
       arrayRemoveItem(userDocument.databases, databaseId);
 
       await userDocument.save();
-      return true;
+      return deletedDatabase;
     },
     updateDatabaseTitle: async (parent, { databaseId, title }, context) => {
       assertAuthenticated(context);
@@ -162,7 +162,7 @@ const resolvers = {
       arrayRemoveItem(databaseDocument.notes, noteId);
       await databaseDocument.save();
 
-      return true;
+      return noteDocument;
     },
     updateNoteTitle: async (parent, { noteId, title }, context) => {
       assertAuthenticated(context);

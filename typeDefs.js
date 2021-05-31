@@ -73,10 +73,10 @@ const typeDefs = gql`
     login(email: String!, password: String!): AuthPayload
     logout: Boolean
     createDatabase: Database
-    deleteDatabase(databaseId: ID!): Boolean
+    deleteDatabase(databaseId: ID!): Database
     updateDatabaseTitle(databaseId: ID!, title: String!): Database
     createNote(databaseId: ID!): Note
-    deleteNote(noteId: ID!): Boolean
+    deleteNote(noteId: ID!): Note
     updateNoteTitle(noteId: ID!, title: String!): Note
     updateNoteBlocks(noteId: ID!, input: UpdateNoteBlocksInput): Note
   }
