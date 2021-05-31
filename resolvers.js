@@ -17,13 +17,13 @@ const resolvers = {
 
       return await Note.findById(noteId);
     },
-    getAllNotesInDatabase: async (parent, { databaseId }, context) => {
+    getDatabase: async (parent, { databaseId }, context) => {
       assertAuthenticated(context);
       await verifyDatabaseBelongsToUser(context, databaseId);
 
       const databaseDocument = await Database.findOne({ _id: databaseId }).populate('notes');
 
-      return databaseDocument.notes;
+      return databaseDocument;
     },
     getAllUserDatabases: async (parent, args, context) => {
       assertAuthenticated(context);
@@ -119,7 +119,32 @@ const resolvers = {
         }
       );
     },
-    // TODO: updateDatabaseView
+    updateDatabaseView: async (parent, { databaseId, view }, context) => {
+      assertAuthenticated(context);
+      await verifyDatabaseBelongsToUser(context, databaseId);
+
+      return await Database.findOneAndUpdate(
+        { _id: databaseId },
+        { currentView: view },
+        {
+          new: true,
+          useFindAndModify: false
+        }
+      );
+    },
+    updateDatabaseNotes: async (parent, {databaseId, notes}, context) => {
+      assertAuthenticated(context);
+      await verifyDatabaseBelongsToUser(context, databaseId);
+
+      return await Database.findOneAndUpdate(
+        { _id: databaseId },
+        { notes: notes },
+        {
+          new: true,
+          useFindAndModify: false
+        }
+      );
+    },
     // TODO: updateDatabaseNotes (array of IDs)
 
     // ================== Note related ==================

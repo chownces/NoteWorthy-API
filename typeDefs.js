@@ -22,6 +22,13 @@ const typeDefs = gql`
     notes: [String]!
   }
 
+  type PopulatedDatabase {
+    id: ID!
+    title: String
+    currentView: String!
+    notes: [Note]!
+  }
+
   type Note {
     id: ID!
     userId: ID!
@@ -63,7 +70,7 @@ const typeDefs = gql`
 
   type Query {
     getNote(noteId: ID!): Note
-    getAllNotesInDatabase(databaseId: ID!): [Note]
+    getDatabase(databaseId: ID!): PopulatedDatabase
     getAllUserDatabases: [Database]
     currentUser: User
   }
@@ -75,6 +82,8 @@ const typeDefs = gql`
     createDatabase: Database
     deleteDatabase(databaseId: ID!): Database
     updateDatabaseTitle(databaseId: ID!, title: String!): Database
+    updateDatabaseView(databaseId: ID!, view: String!): Database
+    updateDatabaseNotes(databaseId: ID!, notes: [ID]!): Database
     createNote(databaseId: ID!): Note
     deleteNote(noteId: ID!): Note
     updateNoteTitle(noteId: ID!, title: String!): Note
@@ -82,6 +91,7 @@ const typeDefs = gql`
   }
 `;
 
+// TODO: Add an enum for Database currentView
 // TODO: See resolvers.js for a list of unimplemented queries and mutations
 
 export default typeDefs;
