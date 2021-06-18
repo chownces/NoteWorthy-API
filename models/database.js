@@ -11,6 +11,12 @@ const DatabaseSchema = new Schema({
     type: String,
     required: true
   },
+  categories: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Category'
+    }
+  ],
   notes: [
     {
       type: Schema.Types.ObjectId,

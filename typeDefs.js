@@ -15,17 +15,26 @@ const typeDefs = gql`
     email: String!
   }
 
+  type Category {
+    id: ID!
+    name: String!
+    notes: [ID]!
+    databaseId: ID!
+  }
+
   type Database {
     id: ID!
     title: String!
     currentView: String!
+    categories: [ID]!
     notes: [String]!
   }
 
   type PopulatedDatabase {
     id: ID!
-    title: String
+    title: String!
     currentView: String!
+    categories: [Category]!
     notes: [Note]!
   }
 
@@ -33,6 +42,7 @@ const typeDefs = gql`
     id: ID!
     userId: ID!
     databaseId: ID!
+    categoryId: ID!
     title: String!
     blocks: [NoteBlock]!
     creationDate: Date!
@@ -81,12 +91,15 @@ const typeDefs = gql`
     logout: Boolean
     createDatabase: Database
     deleteDatabase(databaseId: ID!): Database
+    createDatabaseCategory(databaseId: ID!, categoryName: String!, index: Int!): Database
+    deleteDatabaseCategory(databaseId: ID!, categoryId: ID!): Database
     updateDatabaseTitle(databaseId: ID!, title: String!): Database
     updateDatabaseView(databaseId: ID!, view: String!): Database
     updateDatabaseNotes(databaseId: ID!, notes: [ID]!): Database
-    createNote(databaseId: ID!): Note
+    createNote(databaseId: ID!, categoryId: ID!, title: String!, index: Int!): Note
     deleteNote(noteId: ID!): Note
     updateNoteTitle(noteId: ID!, title: String!): Note
+    updateNoteCategory(noteId: ID!, categoryId: ID!, index: Int!): Database
     updateNoteBlocks(noteId: ID!, input: UpdateNoteBlocksInput): Note
   }
 `;

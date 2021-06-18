@@ -7,6 +7,7 @@ import { AuthenticationError, ForbiddenError, UserInputError } from 'apollo-serv
 import User from './models/user';
 import Database from './models/database';
 import Note from './models/note';
+import Category from './models/category';
 
 // NOTE: We use email as the unique id for user
 const resolvers = {
@@ -21,7 +22,9 @@ const resolvers = {
       assertAuthenticated(context);
       await verifyDatabaseBelongsToUser(context, databaseId);
 
-      const databaseDocument = await Database.findOne({ _id: databaseId }).populate('notes');
+      const databaseDocument = await Database.findOne({ _id: databaseId }).populate(
+        'notes categories'
+      );
 
       return databaseDocument;
     },
@@ -79,8 +82,18 @@ const resolvers = {
         // TODO: Double check defaults
         title: 'untitled',
         currentView: 'table',
-        notes: []
+        notes: [],
+        categories: []
       }).save();
+
+      const newCategory = await new Category({
+        name: 'Non-categorised',
+        notes: [],
+        databaseId: newDatabase._id
+      }).save();
+
+      newDatabase.categories.push(newCategory._id);
+      await newDatabase.save();
 
       userDocument.databases.push(newDatabase._id);
       await userDocument.save();
@@ -132,7 +145,7 @@ const resolvers = {
         }
       );
     },
-    updateDatabaseNotes: async (parent, {databaseId, notes}, context) => {
+    updateDatabaseNotes: async (parent, { databaseId, notes }, context) => {
       assertAuthenticated(context);
       await verifyDatabaseBelongsToUser(context, databaseId);
 
@@ -149,7 +162,7 @@ const resolvers = {
 
     // ================== Note related ==================
     // TODO: Handle the ordering of the notes
-    createNote: async (parent, { databaseId }, context) => {
+    createNote: async (parent, { databaseId, categoryId, title, index }, context) => {
       assertAuthenticated(context);
       await verifyDatabaseBelongsToUser(context, databaseId);
 
@@ -159,12 +172,33 @@ const resolvers = {
         // TODO: Double check defaults
         userId: context.getUser()._id,
         databaseId: databaseId,
-        title: 'untitled',
+        categoryId: categoryId,
+        title: title,
         blocks: []
       }).save();
 
-      databaseDocument.notes.push(newNote._id);
-      await databaseDocument.save();
+      const categoryDocument = await Category.findOne({ _id: categoryId });
+
+      const noteCopy = [...categoryDocument.notes];
+
+      if (databaseDocument.currentView === 'board') {
+        databaseDocument.notes.push(newNote._id);
+        await databaseDocument.save();
+        noteCopy.splice(index, 0, newNote._id);
+      } else {
+        databaseDocument.notes.splice(index, 0, newNote._id);
+        await databaseDocument.save();
+        noteCopy.push(newNote._id);
+      }
+
+      await Category.findOneAndUpdate(
+        { _id: categoryId },
+        { notes: noteCopy },
+        {
+          new: true,
+          useFindAndModify: false
+        }
+      );
 
       // TODO: Check whether to return a boolean instead
       return newNote;
@@ -175,6 +209,7 @@ const resolvers = {
 
       const noteDocument = await Note.findOne({ _id: noteId });
       const databaseId = noteDocument.databaseId;
+      const categoryId = noteDocument.categoryId;
 
       await Note.findOneAndRemove(
         { _id: noteId },
@@ -187,8 +222,65 @@ const resolvers = {
       arrayRemoveItem(databaseDocument.notes, noteId);
       await databaseDocument.save();
 
+      const categoryDocument = await Category.findOne({ _id: categoryId });
+
+      arrayRemoveItem(categoryDocument.notes, noteId);
+      await categoryDocument.save();
+
       return noteDocument;
     },
+
+    deleteDatabaseCategory: async (parent, { databaseId, categoryId }, context) => {
+      assertAuthenticated(context);
+      await verifyDatabaseBelongsToUser(context, databaseId);
+
+      const databaseDocument = await Database.findOne({ _id: databaseId });
+      const categoryDocument = await Category.findOne({ _id: categoryId });
+
+      for (let i = 0; i < categoryDocument.notes; i++) {
+        await Note.findOneAndRemove(
+          { _id: categoryDocument.notes[i] },
+          {
+            useFindAndModify: false
+          }
+        );
+
+        arrayRemoveItem(databaseDocument.notes, categoryDocument.notes[i]);
+        await databaseDocument.save();
+      }
+
+      arrayRemoveItem(databaseDocument.categories, categoryDocument._id);
+      await databaseDocument.save();
+
+      await Category.findOneAndRemove(
+        { _id: categoryId },
+        {
+          userFindAndModify: false
+        }
+      );
+
+      return databaseDocument;
+    },
+
+    createDatabaseCategory: async (parent, { databaseId, categoryName, index }, context) => {
+      assertAuthenticated(context);
+      await verifyDatabaseBelongsToUser(context, databaseId);
+
+      const newCategory = await new Category({
+        name: categoryName,
+        notes: [],
+        databaseId: databaseId
+      }).save();
+
+      const databaseDocument = await Database.findOne({ _id: databaseId });
+      databaseDocument.currentView === 'board'
+        ? databaseDocument.categories.splice(index, 0, newCategory.id)
+        : databaseDocument.categories.push(newCategory.id);
+      await databaseDocument.save();
+
+      return databaseDocument;
+    },
+
     updateNoteTitle: async (parent, { noteId, title }, context) => {
       assertAuthenticated(context);
       await verifyNoteBelongsToUser(context, noteId);
@@ -203,6 +295,39 @@ const resolvers = {
         }
       );
     },
+
+    updateNoteCategory: async (parent, { noteId, categoryId, index }, context) => {
+      assertAuthenticated(context);
+      await verifyNoteBelongsToUser(context, noteId);
+
+      const noteDocument = await Note.findOne({ _id: noteId });
+      const currentCategoryDocument = await Category.findOne({ _id: noteDocument.categoryId });
+      arrayRemoveItem(currentCategoryDocument.notes, noteDocument._id);
+      await currentCategoryDocument.save();
+
+      const newCategoryDocument = await Category.findOne({ _id: categoryId });
+
+      const databaseDocument = await Database.findOne({ _id: newCategoryDocument.databaseId });
+
+      // check currentview, to determine whether index will be used
+      databaseDocument.currentView === 'board'
+        ? newCategoryDocument.notes.splice(index, 0, noteDocument._id)
+        : newCategoryDocument.notes.push(noteDocument._id);
+      await newCategoryDocument.save();
+
+      await Note.findOneAndUpdate(
+        { _id: noteId },
+        { categoryId: categoryId },
+        {
+          new: true,
+          userFindAndModify: false
+        }
+      );
+
+      await databaseDocument.save();
+      return databaseDocument;
+    },
+
     updateNoteBlocks: async (parent, { noteId, input }, context) => {
       assertAuthenticated(context);
       await verifyNoteBelongsToUser(context, noteId);
@@ -217,6 +342,7 @@ const resolvers = {
         }
       );
     }
+
     // TODO: updateNoteDatabaseId (when shifting notes between databases)
   }
 };
