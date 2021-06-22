@@ -21,22 +21,22 @@ const main = async () => {
     })
     .then(conn => mongoose.connection.db.dropDatabase());
 
+  const user = new User({
+    firstname: 'Bob',
+    lastname: 'Tan',
+    email: 'bob@gmail.com',
+    password: '12345',
+    databases: []
+  });
+  await user.hashPassword();
+  await user.save();
+
   const database = await Database.create({
     title: 'My first database',
     currentView: DatabaseViews.BOARD,
     categories: [],
     notes: []
   });
-
-  const user = new User({
-    firstname: 'Bob',
-    lastname: 'Tan',
-    email: 'bob@gmail.com',
-    password: '12345',
-    databases: [database._id]
-  });
-  await user.hashPassword();
-  await user.save();
 
   const categories = await Category.create([
     {
@@ -119,7 +119,9 @@ const main = async () => {
   database.categories.push(...categories.map(e => e._id));
   database.notes.push(...notes.map(e => e._id));
 
-  Promise.all([categories[1].save(), categories[2].save(), database.save()]).then(() =>
+  user.databases.push(database._id);
+
+  Promise.all([categories[1].save(), categories[2].save(), database.save(), user.save()]).then(() =>
     mongoose.connection.close()
   );
 };
