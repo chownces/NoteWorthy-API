@@ -240,18 +240,15 @@ const resolvers = {
       const databaseDocument = await Database.findOne({ _id: databaseId });
       const categoryDocument = await Category.findOne({ _id: categoryId });
 
-      for (let i = 0; i < categoryDocument.notes; i++) {
-        await Note.findOneAndRemove(
-          { _id: categoryDocument.notes[i] },
-          {
-            useFindAndModify: false
-          }
-        );
+      await Note.deleteMany({
+        _id: {
+          $in: categoryDocument.notes
+        }
+      });
 
-        arrayRemoveItem(databaseDocument.notes, categoryDocument.notes[i]);
-        await databaseDocument.save();
-      }
-
+      categoryDocument.notes.forEach(note => {
+        arrayRemoveItem(databaseDocument.notes, note);
+      });
       arrayRemoveItem(databaseDocument.categories, categoryDocument._id);
       await databaseDocument.save();
 
