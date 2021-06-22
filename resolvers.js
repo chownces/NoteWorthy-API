@@ -5,7 +5,7 @@
 import { AuthenticationError, ForbiddenError, UserInputError } from 'apollo-server-express';
 
 import User from './models/user';
-import Database from './models/database';
+import Database, { DatabaseViews } from './models/database';
 import Note from './models/note';
 import Category from './models/category';
 
@@ -22,9 +22,9 @@ const resolvers = {
       assertAuthenticated(context);
       await verifyDatabaseBelongsToUser(context, databaseId);
 
-      const databaseDocument = await Database.findOne({ _id: databaseId }).populate(
-        'notes categories'
-      );
+      const databaseDocument = await Database.findOne({ _id: databaseId })
+        .populate('notes')
+        .populate('categories');
 
       return databaseDocument;
     },
@@ -81,7 +81,7 @@ const resolvers = {
       const newDatabase = await new Database({
         // TODO: Double check defaults
         title: 'untitled',
-        currentView: 'table',
+        currentView: DatabaseViews.TABLE,
         notes: [],
         categories: []
       }).save();
@@ -181,14 +181,17 @@ const resolvers = {
 
       const noteCopy = [...categoryDocument.notes];
 
-      if (databaseDocument.currentView === 'board') {
+      if (databaseDocument.currentView === DatabaseViews.BOARD) {
         databaseDocument.notes.push(newNote._id);
         await databaseDocument.save();
         noteCopy.splice(index, 0, newNote._id);
-      } else {
+      } else if (databaseDocument.currentView === DatabaseViews.TABLE) {
+        // Assumes that categoryDocument passed in is the first category
         databaseDocument.notes.splice(index, 0, newNote._id);
         await databaseDocument.save();
         noteCopy.push(newNote._id);
+      } else {
+        throw new UserInputError('There is no such database view!');
       }
 
       await Category.findOneAndUpdate(
@@ -273,9 +276,14 @@ const resolvers = {
       }).save();
 
       const databaseDocument = await Database.findOne({ _id: databaseId });
-      databaseDocument.currentView === 'board'
-        ? databaseDocument.categories.splice(index, 0, newCategory.id)
-        : databaseDocument.categories.push(newCategory.id);
+
+      if (databaseDocument.currentView === DatabaseViews.BOARD) {
+        databaseDocument.categories.splice(index, 0, newCategory.id);
+      } else if (databaseDocument.currentView === DatabaseViews.TABLE) {
+        databaseDocument.categories.push(newCategory.id);
+      } else {
+        throw new UserInputError('There is no such database view!');
+      }
       await databaseDocument.save();
 
       return databaseDocument;
@@ -310,9 +318,13 @@ const resolvers = {
       const databaseDocument = await Database.findOne({ _id: newCategoryDocument.databaseId });
 
       // check currentview, to determine whether index will be used
-      databaseDocument.currentView === 'board'
-        ? newCategoryDocument.notes.splice(index, 0, noteDocument._id)
-        : newCategoryDocument.notes.push(noteDocument._id);
+      if (databaseDocument.currentView === DatabaseViews.BOARD) {
+        newCategoryDocument.notes.splice(index, 0, noteDocument._id);
+      } else if (databaseDocument.currentView === DatabaseViews.TABLE) {
+        newCategoryDocument.notes.push(noteDocument._id);
+      } else {
+        throw new UserInputError('There is no such database view!');
+      }
       await newCategoryDocument.save();
 
       await Note.findOneAndUpdate(

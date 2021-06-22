@@ -2,6 +2,12 @@ import mongoose from 'mongoose';
 
 const { Schema } = mongoose;
 
+// To replace with Typescript in the future
+export const DatabaseViews = Object.freeze({
+  BOARD: 'board',
+  TABLE: 'table'
+});
+
 const DatabaseSchema = new Schema({
   title: {
     type: String,
