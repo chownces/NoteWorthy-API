@@ -35,7 +35,7 @@ const typeDefs = gql`
     title: String!
     currentView: String!
     categories: [Category]!
-    notes: [Note]!
+    notes: [PopulatedNote]!
   }
 
   type Note {
@@ -44,6 +44,18 @@ const typeDefs = gql`
     databaseId: ID!
     categoryId: ID!
     title: String!
+    blockIds: [String]!
+    creationDate: Date!
+    latestUpdate: Date!
+  }
+
+  type PopulatedNote {
+    id: ID!
+    userId: ID!
+    databaseId: ID!
+    categoryId: ID!
+    title: String!
+    blockIds: [String]!
     blocks: [NoteBlock]!
     creationDate: Date!
     latestUpdate: Date!
@@ -79,7 +91,7 @@ const typeDefs = gql`
   scalar Date
 
   type Query {
-    getNote(noteId: ID!): Note
+    getNote(noteId: ID!): PopulatedNote
     getDatabase(databaseId: ID!): PopulatedDatabase
     getAllUserDatabases: [Database]
     currentUser: User
@@ -101,6 +113,10 @@ const typeDefs = gql`
     updateNoteTitle(noteId: ID!, title: String!): Note
     updateNoteCategory(noteId: ID!, categoryId: ID!, index: Int!): Database
     updateNoteBlocks(noteId: ID!, input: UpdateNoteBlocksInput): Note
+    updateBlockOrder(noteId: ID!, blockId: String!, index: Int!): Note
+    updateBlock(noteId: ID!, blockId: String!, input: NoteBlockInput!): Note
+    deleteBlock(noteId: ID!, blockId: String!): Note
+    createBlock(noteId: ID!, blockId: String!, index: Int!): Note
   }
 `;
 

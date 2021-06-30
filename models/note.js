@@ -2,12 +2,12 @@ import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
 const NoteBlockSchema = new Schema({
-  id: {
+  _id: {
     /**
      * We are using the unique id string that is generated from the frontend
      * as we do not save the changes to the backend on every keydown.
      */
-    type: String,
+    type: Schema.Types.ObjectId,
     required: true
   },
   html: {
@@ -37,8 +37,8 @@ const NoteSchema = new Schema({
     type: String,
     required: true
   },
-  blocks: {
-    type: [NoteBlockSchema],
+  blockIds: {
+    type: [String],
     required: true
   },
   // blocks: {
@@ -55,6 +55,13 @@ const NoteSchema = new Schema({
     required: true,
     default: Date.now
   }
+});
+
+NoteSchema.virtual('blocks', {
+  ref: 'NoteBlock',
+  localField: 'blockIds',
+  foreignField: '_id',
+  justOne: false
 });
 
 const Note = mongoose.model('Note', NoteSchema);

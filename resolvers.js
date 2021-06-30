@@ -8,6 +8,7 @@ import User from './models/user';
 import Database from './models/database';
 import Note from './models/note';
 import Category from './models/category';
+import NoteBlock from './models/noteBlock';
 
 // NOTE: We use email as the unique id for user
 const resolvers = {
@@ -16,15 +17,17 @@ const resolvers = {
       assertAuthenticated(context);
       await verifyNoteBelongsToUser(context, noteId);
 
-      return await Note.findById(noteId);
+      const noteDocument = await Note.findById({ _id: noteId }).populate('blocks');
+      return noteDocument;
     },
     getDatabase: async (parent, { databaseId }, context) => {
       assertAuthenticated(context);
       await verifyDatabaseBelongsToUser(context, databaseId);
 
-      const databaseDocument = await Database.findOne({ _id: databaseId }).populate(
-        'notes categories'
-      );
+      const databaseDocument = await Database.findOne({ _id: databaseId }).populate({
+        path: 'notes categories',
+        populate: { path: 'blocks' }
+      });
 
       return databaseDocument;
     },
@@ -174,7 +177,7 @@ const resolvers = {
         databaseId: databaseId,
         categoryId: categoryId,
         title: title,
-        blocks: []
+        block: []
       }).save();
 
       const categoryDocument = await Category.findOne({ _id: categoryId });
@@ -286,6 +289,7 @@ const resolvers = {
       await verifyNoteBelongsToUser(context, noteId);
 
       // TODO: Check deprecation warning
+
       return await Note.findOneAndUpdate(
         { _id: noteId },
         { title: title, latestUpdate: Date.now() },
@@ -328,10 +332,86 @@ const resolvers = {
       return databaseDocument;
     },
 
-    updateNoteBlocks: async (parent, { noteId, input }, context) => {
+    createBlock: async (parent, { noteId, blockId, index }, context) => {
       assertAuthenticated(context);
       await verifyNoteBelongsToUser(context, noteId);
 
+      const noteDocument = await Note.findOne({ _id: noteId });
+
+      const blockDocument = await new NoteBlock(
+        {
+          // TODO: Double check defaults
+          _id: blockId,
+          html: ' ',
+          tag: 'p'
+        },
+        { minimize: false }
+      ).save();
+
+      noteDocument.blockIds.splice(index, 0, blockId);
+      noteDocument.latestUpdate = Date.now();
+
+      await noteDocument.save();
+      return noteDocument;
+    },
+
+    updateBlockOrder: async (parent, { noteId, blockId, index }, context) => {
+      assertAuthenticated(context);
+      await verifyNoteBelongsToUser(context, noteId);
+
+      const noteDocument = await Note.findOne({ _id: noteId });
+      const blockDocument = await NoteBlock.findOne({ _id: blockId });
+
+      arrayRemoveItem(noteDocument.blockIds, blockId);
+      noteDocument.blockIds.splice(index, 0, blockId);
+      noteDocument.latestUpdate = Date.now();
+
+      await noteDocument.save();
+      return noteDocument;
+    },
+
+    deleteBlock: async (parent, { noteId, blockId }, context) => {
+      assertAuthenticated(context);
+      await verifyNoteBelongsToUser(context, noteId);
+
+      const noteDocument = await Note.findOne({ _id: noteId });
+      await NoteBlock.findOneAndRemove(
+        { _id: blockId },
+        {
+          userFindAndModify: false
+        }
+      );
+      arrayRemoveItem(noteDocument.blockIds, blockId);
+      noteDocument.latestUpdate = Date.now();
+      await noteDocument.save();
+
+      return noteDocument;
+    },
+
+    updateBlock: async (parent, { noteId, blockId, input }, context) => {
+      assertAuthenticated(context);
+      await verifyNoteBelongsToUser(context, noteId);
+
+      await NoteBlock.findOneAndUpdate(
+        { _id: blockId },
+        { ...input },
+        {
+          new: true,
+          useFindAndModify: false
+        }
+      );
+
+      return await Note.findOneAndUpdate(
+        { _id: noteId },
+        { latestUpdate: Date.now() },
+        {
+          new: true,
+          useFindAndModify: false
+        }
+      );
+    },
+
+    updateNoteBlocks: async (parent, { noteId, input }, context) => {
       // TODO: Check deprecation warning
       return await Note.findOneAndUpdate(
         { _id: noteId },
