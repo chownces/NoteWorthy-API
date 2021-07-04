@@ -3,11 +3,13 @@
  * some data in MongoDB.
  */
 import { AuthenticationError, ForbiddenError, UserInputError } from 'apollo-server-express';
+import treeFlatter from 'tree-flatter';
 
 import User from './models/user';
 import Database from './models/database';
 import Note from './models/note';
 import Category from './models/category';
+import _ from 'lodash';
 
 // NOTE: We use email as the unique id for user
 const resolvers = {
@@ -16,8 +18,38 @@ const resolvers = {
       assertAuthenticated(context);
       await verifyNoteBelongsToUser(context, noteId);
 
-      return await Note.findById(noteId);
+      const noteDocument = await Note.findById(noteId);
+
+      const options = {
+        intitNode: node => node
+      };
+
+      //assign root block, for simplification
+      const rootBlock = {
+        id: 'root',
+        children: noteDocument.blocks,
+        html: '',
+        tag: ''
+      };
+
+      const arrOfFlattenedBlocks = treeFlatter(rootBlock, 'children', options);
+      arrOfFlattenedBlocks.splice(0, 1);
+
+      const flatNote = {
+        id: noteDocument._id,
+        userId: noteDocument.userId,
+        databaseId: noteDocument.databaseId,
+        categoryId: noteDocument.categoryId,
+        title: noteDocument.title,
+        blocks: arrOfFlattenedBlocks,
+        creationDate: noteDocument.creationDate,
+        latestUpdate: noteDocument.latestUpdate
+      };
+
+      console.log(flatNote);
+      return flatNote;
     },
+
     getDatabase: async (parent, { databaseId }, context) => {
       assertAuthenticated(context);
       await verifyDatabaseBelongsToUser(context, databaseId);

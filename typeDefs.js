@@ -49,10 +49,30 @@ const typeDefs = gql`
     latestUpdate: Date!
   }
 
+  type FlatNote {
+    id: ID!
+    userId: ID!
+    databaseId: ID!
+    categoryId: ID!
+    title: String!
+    blocks: [FlatBlock]!
+    creationDate: Date!
+    latestUpdate: Date!
+  }
+
   type NoteBlock {
     id: String!
     html: String!
     tag: String!
+    children: [NoteBlock]!
+  }
+
+  type FlatBlock {
+    id: String!
+    html: String!
+    tag: String!
+    children: [String]
+    parent: String
   }
 
   type AuthPayload {
@@ -79,7 +99,7 @@ const typeDefs = gql`
   scalar Date
 
   type Query {
-    getNote(noteId: ID!): Note
+    getNote(noteId: ID!): FlatNote
     getDatabase(databaseId: ID!): PopulatedDatabase
     getAllUserDatabases: [Database]
     currentUser: User

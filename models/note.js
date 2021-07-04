@@ -17,6 +17,10 @@ const NoteBlockSchema = new Schema({
   tag: {
     type: String,
     required: true
+  },
+  children: {
+    type: [NoteBlockSchema],
+    required: true
   }
 });
 
