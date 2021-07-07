@@ -90,6 +90,7 @@ const typeDefs = gql`
     id: String!
     html: String!
     tag: String!
+    children: [NoteBlockInput]
   }
 
   input UpdateNoteBlocksInput {
@@ -102,6 +103,7 @@ const typeDefs = gql`
     getNote(noteId: ID!): FlatNote
     getDatabase(databaseId: ID!): PopulatedDatabase
     getAllUserDatabases: [Database]
+
     currentUser: User
   }
 
