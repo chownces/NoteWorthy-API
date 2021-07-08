@@ -20,13 +20,10 @@ const resolvers = {
 
       const noteDocument = await Note.findById(noteId);
 
-
-      console.log(noteDocument);
-      
       const options = {
         intitNode: node => _.clone(node),
         idKey: 'id',
-        itemsKey: 'children',
+        itemsKey: 'children'
       };
 
       //assign root block, for simplification
@@ -36,17 +33,18 @@ const resolvers = {
         html: '',
         tag: 'p'
       };
-    
-      console.log(rootBlock);
-      const arrOfFlattenedBlocks = treeFlatter(rootBlock, options);
-      console.log("test");
-      arrOfFlattenedBlocks.map(block => console.log(block.parent));
-      console.log('flat');
-      console.log(arrOfFlattenedBlocks);
 
-      console.log('final');
-      const blocks = arrOfFlattenedBlocks.map(block => {return {id: block.id, children: block.children, html: block.html, tag: block.tag, parent: block.parent === undefined? null : block.parent}});
-      console.log(blocks);
+      const arrOfFlattenedBlocks = treeFlatter(rootBlock, options);
+
+      const blocks = arrOfFlattenedBlocks.map(block => {
+        return {
+          id: block.id,
+          children: block.children,
+          html: block.html,
+          tag: block.tag,
+          parent: block.parent === undefined ? null : block.parent
+        };
+      });
 
       const flatNote = {
         id: noteDocument._id,
@@ -59,7 +57,6 @@ const resolvers = {
         latestUpdate: noteDocument.latestUpdate
       };
 
-      console.log(flatNote);
       return flatNote;
     },
 
@@ -193,7 +190,6 @@ const resolvers = {
     updateDatabaseNotes: async (parent, { databaseId, notes }, context) => {
       assertAuthenticated(context);
       await verifyDatabaseBelongsToUser(context, databaseId);
-
 
       return await Database.findOneAndUpdate(
         { _id: databaseId },
@@ -378,25 +374,16 @@ const resolvers = {
       assertAuthenticated(context);
       await verifyNoteBelongsToUser(context, noteId);
 
-      
-
-      console.log('input');
-      console.log(input.blocks[0].children);
-
       // TODO: Check deprecation warning
-      const noteDocument = await Note.findById(
-        { _id: noteId }
-      )
-      
+      const noteDocument = await Note.findById({ _id: noteId });
 
       noteDocument.blocks = [...input.blocks];
-      
-      
+
       noteDocument.latestUpdate = Date.now();
-      
+
       await noteDocument.save();
       return noteDocument;
-      }
+    }
 
     // TODO: updateNoteDatabaseId (when shifting notes between databases)
   }
