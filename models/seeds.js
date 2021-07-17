@@ -121,9 +121,12 @@ const main = async () => {
 
   user.databases.push(database._id);
 
-  Promise.all([categories[1].save(), categories[2].save(), database.save(), user.save()]).then(() =>
-    mongoose.connection.close()
-  );
+  await Promise.all([
+    categories[1].save(),
+    categories[2].save(),
+    database.save(),
+    user.save()
+  ]).then(() => mongoose.connection.close());
 };
 
 main();
