@@ -262,6 +262,17 @@ const resolvers = {
       return databaseDocument;
     },
 
+    updateDatabaseCategories: async (parent, { databaseId, categories }, context) => {
+      assertAuthenticated(context);
+      await verifyDatabaseBelongsToUser(context, databaseId);
+
+      const databaseDocument = await Database.findOne({ _id: databaseId });
+      databaseDocument.categories = categories;
+      await databaseDocument.save();
+
+      return databaseDocument;
+    },
+
     createDatabaseCategory: async (parent, { databaseId, categoryName, index }, context) => {
       assertAuthenticated(context);
       await verifyDatabaseBelongsToUser(context, databaseId);
