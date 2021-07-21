@@ -273,6 +273,18 @@ const resolvers = {
       return databaseDocument;
     },
 
+    updateCategoryName: async (parent, { categoryId, name }, context) => {
+      assertAuthenticated(context);
+
+      const categoryDocument = await Category.findOne({ _id: categoryId });
+      await verifyDatabaseBelongsToUser(context, categoryDocument.databaseId);
+
+      categoryDocument.name = name;
+      await categoryDocument.save();
+
+      return categoryDocument;
+    },
+
     createDatabaseCategory: async (parent, { databaseId, categoryName, index }, context) => {
       assertAuthenticated(context);
       await verifyDatabaseBelongsToUser(context, databaseId);
