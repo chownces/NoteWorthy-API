@@ -72,7 +72,7 @@ const resolvers = {
 
     // ================== Database related ==================
     // TODO: Handle the ordering of the databases
-    createDatabase: async (parent, args, context) => {
+    createDatabase: async (parent, {index}, context) => {
       assertAuthenticated(context);
 
       const email = context.getUser().email;
@@ -95,8 +95,13 @@ const resolvers = {
       newDatabase.categories.push(newCategory._id);
       await newDatabase.save();
 
-      userDocument.databases.push(newDatabase._id);
+      console.log(index);
+
+      
+      userDocument.databases.splice(index, 0, newDatabase._id);
       await userDocument.save();
+
+      await console.log(userDocument.databases);
 
       // TODO: Check whether to return a boolean instead
       return newDatabase;

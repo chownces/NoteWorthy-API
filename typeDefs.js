@@ -89,7 +89,7 @@ const typeDefs = gql`
     register(input: RegisterInput): AuthPayload
     login(email: String!, password: String!): AuthPayload
     logout: Boolean
-    createDatabase: Database
+    createDatabase(index: Int!): Database
     deleteDatabase(databaseId: ID!): Database
     createDatabaseCategory(databaseId: ID!, categoryName: String!, index: Int!): Database
     deleteDatabaseCategory(databaseId: ID!, categoryId: ID!): Database
