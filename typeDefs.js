@@ -101,6 +101,7 @@ const typeDefs = gql`
     updateNoteTitle(noteId: ID!, title: String!): Note
     updateNoteCategory(noteId: ID!, categoryId: ID!, index: Int!): Database
     updateNoteBlocks(noteId: ID!, input: UpdateNoteBlocksInput): Note
+    updateDatabases(databases: [ID]!): User
   }
 `;
 

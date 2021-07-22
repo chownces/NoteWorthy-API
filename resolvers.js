@@ -8,6 +8,7 @@ import User from './models/user';
 import Database, { DatabaseViews } from './models/database';
 import Note from './models/note';
 import Category from './models/category';
+import { use } from 'passport';
 
 // NOTE: We use email as the unique id for user
 const resolvers = {
@@ -72,7 +73,7 @@ const resolvers = {
 
     // ================== Database related ==================
     // TODO: Handle the ordering of the databases
-    createDatabase: async (parent, {index}, context) => {
+    createDatabase: async (parent, { index }, context) => {
       assertAuthenticated(context);
 
       const email = context.getUser().email;
@@ -97,7 +98,6 @@ const resolvers = {
 
       console.log(index);
 
-      
       userDocument.databases.splice(index, 0, newDatabase._id);
       await userDocument.save();
 
@@ -162,6 +162,19 @@ const resolvers = {
           useFindAndModify: false
         }
       );
+    },
+
+    updateDatabases: async (parent, { databases }, context) => {
+      assertAuthenticated(context);
+
+      const email = context.getUser().email;
+      const userDocument = await User.findOne({ email: email });
+
+      userDocument.databases = databases;
+
+      userDocument.save();
+
+      return userDocument;
     },
     // TODO: updateDatabaseNotes (array of IDs)
 
