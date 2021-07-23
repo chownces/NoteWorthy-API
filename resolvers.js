@@ -280,6 +280,29 @@ const resolvers = {
       return databaseDocument;
     },
 
+    updateDatabaseCategories: async (parent, { databaseId, categories }, context) => {
+      assertAuthenticated(context);
+      await verifyDatabaseBelongsToUser(context, databaseId);
+
+      const databaseDocument = await Database.findOne({ _id: databaseId });
+      databaseDocument.categories = categories;
+      await databaseDocument.save();
+
+      return databaseDocument;
+    },
+
+    updateCategoryName: async (parent, { categoryId, name }, context) => {
+      assertAuthenticated(context);
+
+      const categoryDocument = await Category.findOne({ _id: categoryId });
+      await verifyDatabaseBelongsToUser(context, categoryDocument.databaseId);
+
+      categoryDocument.name = name;
+      await categoryDocument.save();
+
+      return categoryDocument;
+    },
+
     createDatabaseCategory: async (parent, { databaseId, categoryName, index }, context) => {
       assertAuthenticated(context);
       await verifyDatabaseBelongsToUser(context, databaseId);
