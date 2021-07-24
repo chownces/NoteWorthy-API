@@ -91,7 +91,7 @@ const typeDefs = gql`
     logout: Boolean
     createDatabase: Database
     deleteDatabase(databaseId: ID!): Database
-    createDatabaseCategory(databaseId: ID!, categoryName: String!, index: Int!): Database
+    createDatabaseCategory(databaseId: ID!, categoryName: String!, index: Int!): Category
     deleteDatabaseCategory(databaseId: ID!, categoryId: ID!): Database
     updateDatabaseCategories(databaseId: ID!, categories: [ID]!): Database
     updateCategoryName(categoryId: ID!, name: String!): Category

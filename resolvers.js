@@ -306,7 +306,7 @@ const resolvers = {
       }
       await databaseDocument.save();
 
-      return databaseDocument;
+      return newCategory;
     },
 
     updateNoteTitle: async (parent, { noteId, title }, context) => {
