@@ -53,36 +53,11 @@ const resolvers = {
       if (await User.findOne({ email: input.email })) {
         throw new UserInputError('Email has been taken');
       }
-      const newUser = new User({
-        firstname: input.firstname,
-        lastname: input.lastname,
-        email: input.email,
-        password: input.password,
-        databases: []
-      });
-      await newUser.hashPassword();
-      newUser.save((error, document) => {
-        // TODO: Remove this console log
-        if (error) console.error(error);
-        console.log(document);
-      });
-      await context.login(newUser);
-
-      return { user: newUser };
-    },
-
-    // ================== Database related ==================
-    // TODO: Handle the ordering of the databases
-    createDatabase: async (parent, { index }, context) => {
-      assertAuthenticated(context);
-
-      const email = context.getUser().email;
-      const userDocument = await User.findOne({ email: email });
 
       const newDatabase = await new Database({
         // TODO: Double check defaults
-        title: 'untitled',
-        currentView: DatabaseViews.TABLE,
+        title: input.firstname + ' ' + input.lastname + "'s first database",
+        currentView: DatabaseViews.BOARD,
         notes: [],
         categories: []
       }).save();
@@ -96,12 +71,54 @@ const resolvers = {
       newDatabase.categories.push(newCategory._id);
       await newDatabase.save();
 
-      console.log(index);
+      const newUser = new User({
+        firstname: input.firstname,
+        lastname: input.lastname,
+        email: input.email,
+        password: input.password,
+        databases: [newDatabase._id]
+      });
+
+      await newUser.hashPassword();
+      newUser.save((error, document) => {
+        // TODO: Remove this console log
+        if (error) console.error(error);
+        console.log(document);
+      });
+      await context.login(newUser);
+
+      console.log(newUser);
+
+      return { user: newUser };
+    },
+
+    // ================== Database related ==================
+    // TODO: Handle the ordering of the databases
+    createDatabase: async (parent, { index, title }, context) => {
+      assertAuthenticated(context);
+
+      const email = context.getUser().email;
+      const userDocument = await User.findOne({ email: email });
+
+      const newDatabase = await new Database({
+        // TODO: Double check defaults
+        title: title,
+        currentView: DatabaseViews.BOARD,
+        notes: [],
+        categories: []
+      }).save();
+
+      const newCategory = await new Category({
+        name: 'Non-categorised',
+        notes: [],
+        databaseId: newDatabase._id
+      }).save();
+
+      newDatabase.categories.push(newCategory._id);
+      await newDatabase.save();
 
       userDocument.databases.splice(index, 0, newDatabase._id);
       await userDocument.save();
-
-      await console.log(userDocument.databases);
 
       // TODO: Check whether to return a boolean instead
       return newDatabase;

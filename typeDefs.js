@@ -13,6 +13,7 @@ const typeDefs = gql`
     firstname: String!
     lastname: String!
     email: String!
+    databases: [ID]!
   }
 
   type Category {
@@ -89,7 +90,7 @@ const typeDefs = gql`
     register(input: RegisterInput): AuthPayload
     login(email: String!, password: String!): AuthPayload
     logout: Boolean
-    createDatabase(index: Int!): Database
+    createDatabase(title: String!, index: Int!): Database
     deleteDatabase(databaseId: ID!): Database
     createDatabaseCategory(databaseId: ID!, categoryName: String!, index: Int!): Database
     deleteDatabaseCategory(databaseId: ID!, categoryId: ID!): Database
