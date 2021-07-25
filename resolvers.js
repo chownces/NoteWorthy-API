@@ -344,6 +344,41 @@ const resolvers = {
       return databaseDocument;
     },
 
+    createDatabaseCategoryForCurrentNote: async (
+      parent,
+      { databaseId, categoryName, noteId },
+      context
+    ) => {
+      assertAuthenticated(context);
+      await verifyDatabaseBelongsToUser(context, databaseId);
+
+      const noteDocument = await Note.findOne({ _id: noteId });
+
+      const currentCategory = await Category.findOne({ _id: noteDocument.categoryId });
+
+      arrayRemoveItem(currentCategory.notes, noteId);
+
+      currentCategory.save();
+
+      const newCategory = await new Category({
+        name: categoryName,
+        notes: [noteId],
+        databaseId: databaseId
+      }).save();
+
+      noteDocument.categoryId = newCategory._id;
+
+      noteDocument.save();
+
+      const databaseDocument = await Database.findOne({ _id: databaseId });
+
+      databaseDocument.categories.push(newCategory.id);
+
+      await databaseDocument.save();
+
+      return databaseDocument;
+    },
+
     updateNoteTitle: async (parent, { noteId, title }, context) => {
       assertAuthenticated(context);
       await verifyNoteBelongsToUser(context, noteId);

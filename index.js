@@ -40,9 +40,9 @@ const corsOptions = {
 
 const app = express();
 
-app.use(function (req, res, next) {
-  setTimeout(next, 1000);
-});
+// app.use(function (req, res, next) {
+//   setTimeout(next, 1000);
+// });
 
 // TODO: Recheck the arguments here
 const sessionConfig = {

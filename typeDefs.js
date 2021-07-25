@@ -93,6 +93,11 @@ const typeDefs = gql`
     createDatabase(title: String!, index: Int!): Database
     deleteDatabase(databaseId: ID!): Database
     createDatabaseCategory(databaseId: ID!, categoryName: String!, index: Int!): Database
+    createDatabaseCategoryForCurrentNote(
+      databaseId: ID!
+      categoryName: String!
+      noteId: ID!
+    ): Database
     deleteDatabaseCategory(databaseId: ID!, categoryId: ID!): Database
     updateDatabaseCategories(databaseId: ID!, categories: [ID]!): Database
     updateCategoryName(categoryId: ID!, name: String!): Category
