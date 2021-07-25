@@ -115,7 +115,7 @@ const typeDefs = gql`
     createNote(databaseId: ID!, categoryId: ID!, title: String!, index: Int!): Note
     deleteNote(noteId: ID!): Note
     updateNoteTitle(noteId: ID!, title: String!): Note
-    updateNoteCategory(noteId: ID!, categoryId: ID!, index: Int!): Database
+    updateNoteCategory(noteId: ID!, categoryId: ID!, index: Int!): PopulatedDatabase
     updateNoteBlocks(noteId: ID!, input: UpdateNoteBlocksInput): Note
     generateSharedLink(noteId: ID!): SharedLink
   }

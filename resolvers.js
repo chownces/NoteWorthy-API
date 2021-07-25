@@ -367,7 +367,7 @@ const resolvers = {
       );
 
       await databaseDocument.save();
-      return databaseDocument;
+      return await Database.findOne({ _id: newCategoryDocument.databaseId }).populate(['notes', 'categories']);
     },
 
     updateNoteBlocks: async (parent, { noteId, input }, context) => {
