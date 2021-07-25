@@ -14,6 +14,7 @@ const typeDefs = gql`
     lastname: String!
     email: String!
     databases: [ID]!
+    lastVisited: ID!
   }
 
   type Category {
@@ -110,6 +111,7 @@ const typeDefs = gql`
     updateNoteCategory(noteId: ID!, categoryId: ID!, index: Int!): Database
     updateNoteBlocks(noteId: ID!, input: UpdateNoteBlocksInput): Note
     updateDatabases(databases: [ID]!): User
+    updateLastVisited(lastVisited: ID!): User
   }
 `;
 

@@ -37,7 +37,13 @@ const resolvers = {
 
       return userDocument.databases;
     },
-    currentUser: (parent, args, context) => context.getUser()
+    currentUser: (parent, args, context) => {
+      const userDocument = context.getUser();
+
+      console.log('ok', context.getUser());
+
+      return userDocument;
+    }
   },
   Mutation: {
     // ================== Authentication related ==================
@@ -76,7 +82,8 @@ const resolvers = {
         lastname: input.lastname,
         email: input.email,
         password: input.password,
-        databases: [newDatabase._id]
+        databases: [newDatabase._id],
+        lastVisited: newDatabase._id
       });
 
       await newUser.hashPassword();
@@ -193,6 +200,20 @@ const resolvers = {
 
       return userDocument;
     },
+
+    updateLastVisited: async (parent, { lastVisited }, context) => {
+      assertAuthenticated(context);
+
+      const email = context.getUser().email;
+      const userDocument = await User.findOne({ email: email });
+
+      userDocument.lastVisited = lastVisited;
+
+      userDocument.save();
+
+      return userDocument;
+    },
+
     // TODO: updateDatabaseNotes (array of IDs)
 
     // ================== Note related ==================
