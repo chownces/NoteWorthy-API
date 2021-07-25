@@ -3,11 +3,13 @@
  * some data in MongoDB.
  */
 import { AuthenticationError, ForbiddenError, UserInputError } from 'apollo-server-express';
+import bcrypt from 'bcrypt';
 
 import User from './models/user';
 import Database, { DatabaseViews } from './models/database';
 import Note from './models/note';
 import Category from './models/category';
+import SharedLink from './models/sharedLink';
 
 // NOTE: We use email as the unique id for user
 const resolvers = {
@@ -36,7 +38,15 @@ const resolvers = {
 
       return userDocument.databases;
     },
-    currentUser: (parent, args, context) => context.getUser()
+    currentUser: (parent, { args }, context) => context.getUser(),
+    getNoteBySharedLinkHash: async (parent, { hash }, context) => {
+      // Note: there is no auth required for shared links (design decision)
+
+      const sharedLink = await SharedLink.findOne({ hash });
+      const note = await Note.findOne({ _id: sharedLink.noteId }).populate('user');
+
+      return note;
+    }
   },
   Mutation: {
     // ================== Authentication related ==================
@@ -373,6 +383,28 @@ const resolvers = {
           useFindAndModify: false
         }
       );
+    },
+
+    generateSharedLink: async (parent, { noteId }, context) => {
+      assertAuthenticated(context);
+      await verifyNoteBelongsToUser(context, noteId);
+
+      const existingLink = await SharedLink.findOne({ noteId: noteId });
+
+      if (existingLink) {
+        return existingLink;
+      } else {
+        const salt = await bcrypt.genSalt(12);
+        const hashedId = await bcrypt.hash(noteId, salt);
+
+        const link = new SharedLink({
+          noteId: noteId,
+          hash: hashedId
+        });
+
+        link.save();
+        return link;
+      }
     }
 
     // TODO: updateNoteDatabaseId (when shifting notes between databases)

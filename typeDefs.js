@@ -59,6 +59,19 @@ const typeDefs = gql`
     user: User!
   }
 
+  type SharedLink {
+    noteId: ID!
+    hash: String!
+  }
+
+  type SharedLinkNote {
+    id: ID!
+    user: User
+    title: String!
+    blocks: [NoteBlock]!
+    latestUpdate: Date!
+  }
+
   input RegisterInput {
     firstname: String!
     lastname: String!
@@ -83,6 +96,7 @@ const typeDefs = gql`
     getDatabase(databaseId: ID!): PopulatedDatabase
     getAllUserDatabases: [Database]
     currentUser: User
+    getNoteBySharedLinkHash(hash: String!): SharedLinkNote
   }
 
   type Mutation {
@@ -103,6 +117,7 @@ const typeDefs = gql`
     updateNoteTitle(noteId: ID!, title: String!): Note
     updateNoteCategory(noteId: ID!, categoryId: ID!, index: Int!): Database
     updateNoteBlocks(noteId: ID!, input: UpdateNoteBlocksInput): Note
+    generateSharedLink(noteId: ID!): SharedLink
   }
 `;
 
