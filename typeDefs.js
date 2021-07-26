@@ -61,6 +61,19 @@ const typeDefs = gql`
     user: User!
   }
 
+  type SharedLink {
+    noteId: ID!
+    hash: String!
+  }
+
+  type SharedLinkNote {
+    id: ID!
+    user: User
+    title: String!
+    blocks: [NoteBlock]!
+    latestUpdate: Date!
+  }
+
   input RegisterInput {
     firstname: String!
     lastname: String!
@@ -85,6 +98,7 @@ const typeDefs = gql`
     getDatabase(databaseId: ID!): PopulatedDatabase
     getAllUserDatabases: [Database]
     currentUser: User
+    getNoteBySharedLinkHash(hash: String!): SharedLinkNote
   }
 
   type Mutation {
@@ -93,12 +107,13 @@ const typeDefs = gql`
     logout: Boolean
     createDatabase(title: String!, index: Int!): Database
     deleteDatabase(databaseId: ID!): Database
-    createDatabaseCategory(databaseId: ID!, categoryName: String!, index: Int!): Database
+    
     createDatabaseCategoryForCurrentNote(
       databaseId: ID!
       categoryName: String!
       noteId: ID!
     ): Database
+    createDatabaseCategory(databaseId: ID!, categoryName: String!, index: Int!): Category
     deleteDatabaseCategory(databaseId: ID!, categoryId: ID!): Database
     updateDatabaseCategories(databaseId: ID!, categories: [ID]!): Database
     updateCategoryName(categoryId: ID!, name: String!): Category
@@ -108,10 +123,11 @@ const typeDefs = gql`
     createNote(databaseId: ID!, categoryId: ID!, title: String!, index: Int!): Note
     deleteNote(noteId: ID!): Note
     updateNoteTitle(noteId: ID!, title: String!): Note
-    updateNoteCategory(noteId: ID!, categoryId: ID!, index: Int!): Database
+    updateNoteCategory(noteId: ID!, categoryId: ID!, index: Int!): PopulatedDatabase
     updateNoteBlocks(noteId: ID!, input: UpdateNoteBlocksInput): Note
     updateDatabases(databases: [ID]!): User
     updateLastVisited(lastVisited: ID!): User
+    generateSharedLink(noteId: ID!): SharedLink
   }
 `;
 
