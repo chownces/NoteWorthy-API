@@ -27,7 +27,12 @@ const UserSchema = new Schema({
       type: Schema.Types.ObjectId,
       ref: 'Database'
     }
-  ]
+  ],
+  // TODO: Rename to latestViewed
+  lastVisited: {
+    type: Schema.Types.ObjectId,
+    required: 'true'
+  }
 });
 
 UserSchema.methods = {

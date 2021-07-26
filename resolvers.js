@@ -62,36 +62,11 @@ const resolvers = {
       if (await User.findOne({ email: input.email })) {
         throw new UserInputError('Email has been taken');
       }
-      const newUser = new User({
-        firstname: input.firstname,
-        lastname: input.lastname,
-        email: input.email,
-        password: input.password,
-        databases: []
-      });
-      await newUser.hashPassword();
-      newUser.save((error, document) => {
-        // TODO: Remove this console log
-        if (error) console.error(error);
-        console.log(document);
-      });
-      await context.login(newUser);
-
-      return { user: newUser };
-    },
-
-    // ================== Database related ==================
-    // TODO: Handle the ordering of the databases
-    createDatabase: async (parent, args, context) => {
-      assertAuthenticated(context);
-
-      const email = context.getUser().email;
-      const userDocument = await User.findOne({ email: email });
 
       const newDatabase = await new Database({
         // TODO: Double check defaults
-        title: 'untitled',
-        currentView: DatabaseViews.TABLE,
+        title: input.firstname + ' ' + input.lastname + "'s first database",
+        currentView: DatabaseViews.BOARD,
         notes: [],
         categories: []
       }).save();
@@ -105,7 +80,54 @@ const resolvers = {
       newDatabase.categories.push(newCategory._id);
       await newDatabase.save();
 
-      userDocument.databases.push(newDatabase._id);
+      const newUser = new User({
+        firstname: input.firstname,
+        lastname: input.lastname,
+        email: input.email,
+        password: input.password,
+        databases: [newDatabase._id],
+        lastVisited: newDatabase._id
+      });
+
+      await newUser.hashPassword();
+      newUser.save((error, document) => {
+        // TODO: Remove this console log
+        if (error) console.error(error);
+        console.log(document);
+      });
+      await context.login(newUser);
+
+      console.log(newUser);
+
+      return { user: newUser };
+    },
+
+    // ================== Database related ==================
+    // TODO: Handle the ordering of the databases
+    createDatabase: async (parent, { index, title }, context) => {
+      assertAuthenticated(context);
+
+      const email = context.getUser().email;
+      const userDocument = await User.findOne({ email: email });
+
+      const newDatabase = await new Database({
+        // TODO: Double check defaults
+        title: title,
+        currentView: DatabaseViews.BOARD,
+        notes: [],
+        categories: []
+      }).save();
+
+      const newCategory = await new Category({
+        name: 'Non-categorised',
+        notes: [],
+        databaseId: newDatabase._id
+      }).save();
+
+      newDatabase.categories.push(newCategory._id);
+      await newDatabase.save();
+
+      userDocument.databases.splice(index, 0, newDatabase._id);
       await userDocument.save();
 
       // TODO: Check whether to return a boolean instead
@@ -168,6 +190,33 @@ const resolvers = {
         }
       );
     },
+
+    updateDatabases: async (parent, { databases }, context) => {
+      assertAuthenticated(context);
+
+      const email = context.getUser().email;
+      const userDocument = await User.findOne({ email: email });
+
+      userDocument.databases = databases;
+
+      userDocument.save();
+
+      return userDocument;
+    },
+
+    updateLastVisited: async (parent, { lastVisited }, context) => {
+      assertAuthenticated(context);
+
+      const email = context.getUser().email;
+      const userDocument = await User.findOne({ email: email });
+
+      userDocument.lastVisited = lastVisited;
+
+      userDocument.save();
+
+      return userDocument;
+    },
+
     // TODO: updateDatabaseNotes (array of IDs)
 
     // ================== Note related ==================
@@ -319,6 +368,41 @@ const resolvers = {
       return newCategory;
     },
 
+    createDatabaseCategoryForCurrentNote: async (
+      parent,
+      { databaseId, categoryName, noteId },
+      context
+    ) => {
+      assertAuthenticated(context);
+      await verifyDatabaseBelongsToUser(context, databaseId);
+
+      const noteDocument = await Note.findOne({ _id: noteId });
+
+      const currentCategory = await Category.findOne({ _id: noteDocument.categoryId });
+
+      arrayRemoveItem(currentCategory.notes, noteId);
+
+      currentCategory.save();
+
+      const newCategory = await new Category({
+        name: categoryName,
+        notes: [noteId],
+        databaseId: databaseId
+      }).save();
+
+      noteDocument.categoryId = newCategory._id;
+
+      noteDocument.save();
+
+      const databaseDocument = await Database.findOne({ _id: databaseId });
+
+      databaseDocument.categories.push(newCategory.id);
+
+      await databaseDocument.save();
+
+      return databaseDocument;
+    },
+
     updateNoteTitle: async (parent, { noteId, title }, context) => {
       assertAuthenticated(context);
       await verifyNoteBelongsToUser(context, noteId);
@@ -367,7 +451,10 @@ const resolvers = {
       );
 
       await databaseDocument.save();
-      return await Database.findOne({ _id: newCategoryDocument.databaseId }).populate(['notes', 'categories']);
+      return await Database.findOne({ _id: newCategoryDocument.databaseId }).populate([
+        'notes',
+        'categories'
+      ]);
     },
 
     updateNoteBlocks: async (parent, { noteId, input }, context) => {

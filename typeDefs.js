@@ -13,6 +13,7 @@ const typeDefs = gql`
     firstname: String!
     lastname: String!
     email: String!
+    lastVisited: ID!
   }
 
   type Category {
@@ -103,8 +104,13 @@ const typeDefs = gql`
     register(input: RegisterInput): AuthPayload
     login(email: String!, password: String!): AuthPayload
     logout: Boolean
-    createDatabase: Database
+    createDatabase(title: String!, index: Int!): Database
     deleteDatabase(databaseId: ID!): Database
+    createDatabaseCategoryForCurrentNote(
+      databaseId: ID!
+      categoryName: String!
+      noteId: ID!
+    ): Database
     createDatabaseCategory(databaseId: ID!, categoryName: String!, index: Int!): Category
     deleteDatabaseCategory(databaseId: ID!, categoryId: ID!): Database
     updateDatabaseCategories(databaseId: ID!, categories: [ID]!): Database
@@ -117,6 +123,8 @@ const typeDefs = gql`
     updateNoteTitle(noteId: ID!, title: String!): Note
     updateNoteCategory(noteId: ID!, categoryId: ID!, index: Int!): PopulatedDatabase
     updateNoteBlocks(noteId: ID!, input: UpdateNoteBlocksInput): Note
+    updateDatabases(databases: [ID]!): User
+    updateLastVisited(lastVisited: ID!): User
     generateSharedLink(noteId: ID!): SharedLink
   }
 `;
