@@ -4,6 +4,7 @@
  */
 import { AuthenticationError, ForbiddenError, UserInputError } from 'apollo-server-express';
 import bcrypt from 'bcrypt';
+import mongoose from 'mongoose';
 
 import User from './models/user';
 import Database, { DatabaseViews } from './models/database';
@@ -422,35 +423,42 @@ const resolvers = {
       assertAuthenticated(context);
       await verifyNoteBelongsToUser(context, noteId);
 
-      const noteDocument = await Note.findOne({ _id: noteId });
-      const currentCategoryDocument = await Category.findOne({ _id: noteDocument.categoryId });
-      arrayRemoveItem(currentCategoryDocument.notes, noteDocument._id);
-      await currentCategoryDocument.save();
+      const session = await mongoose.startSession();
 
-      const newCategoryDocument = await Category.findOne({ _id: categoryId });
+      let newCategoryDocument;
 
-      const databaseDocument = await Database.findOne({ _id: newCategoryDocument.databaseId });
+      await session.withTransaction(async () => {
+        const noteDocument = await Note.findOne({ _id: noteId });
+        const currentCategoryDocument = await Category.findOne({ _id: noteDocument.categoryId });
+        arrayRemoveItem(currentCategoryDocument.notes, noteDocument._id);
+        await currentCategoryDocument.save();
 
-      // check currentview, to determine whether index will be used
-      if (databaseDocument.currentView === DatabaseViews.BOARD) {
-        newCategoryDocument.notes.splice(index, 0, noteDocument._id);
-      } else if (databaseDocument.currentView === DatabaseViews.TABLE) {
-        newCategoryDocument.notes.push(noteDocument._id);
-      } else {
-        throw new UserInputError('There is no such database view!');
-      }
-      await newCategoryDocument.save();
+        newCategoryDocument = await Category.findOne({ _id: categoryId });
 
-      await Note.findOneAndUpdate(
-        { _id: noteId },
-        { categoryId: categoryId },
-        {
-          new: true,
-          userFindAndModify: false
+        const databaseDocument = await Database.findOne({ _id: newCategoryDocument.databaseId });
+
+        // check currentview, to determine whether index will be used
+        if (databaseDocument.currentView === DatabaseViews.BOARD) {
+          newCategoryDocument.notes.splice(index, 0, noteDocument._id);
+        } else if (databaseDocument.currentView === DatabaseViews.TABLE) {
+          newCategoryDocument.notes.push(noteDocument._id);
+        } else {
+          throw new UserInputError('There is no such database view!');
         }
-      );
+        await newCategoryDocument.save();
 
-      await databaseDocument.save();
+        await Note.findOneAndUpdate(
+          { _id: noteId },
+          { categoryId: categoryId },
+          {
+            new: true,
+            useFindAndModify: false
+          }
+        );
+      });
+
+      session.endSession();
+
       return await Database.findOne({ _id: newCategoryDocument.databaseId }).populate([
         'notes',
         'categories'
