@@ -13,7 +13,6 @@ const typeDefs = gql`
     firstname: String!
     lastname: String!
     email: String!
-    databases: [ID]!
     lastVisited: ID!
   }
 
@@ -107,7 +106,6 @@ const typeDefs = gql`
     logout: Boolean
     createDatabase(title: String!, index: Int!): Database
     deleteDatabase(databaseId: ID!): Database
-    
     createDatabaseCategoryForCurrentNote(
       databaseId: ID!
       categoryName: String!

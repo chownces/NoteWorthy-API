@@ -28,6 +28,7 @@ const UserSchema = new Schema({
       ref: 'Database'
     }
   ],
+  // TODO: Rename to latestViewed
   lastVisited: {
     type: Schema.Types.ObjectId,
     required: 'true'

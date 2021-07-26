@@ -451,7 +451,10 @@ const resolvers = {
       );
 
       await databaseDocument.save();
-      return await Database.findOne({ _id: newCategoryDocument.databaseId }).populate(['notes', 'categories']);
+      return await Database.findOne({ _id: newCategoryDocument.databaseId }).populate([
+        'notes',
+        'categories'
+      ]);
     },
 
     updateNoteBlocks: async (parent, { noteId, input }, context) => {
